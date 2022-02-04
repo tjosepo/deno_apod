@@ -1,13 +1,12 @@
-import { DOMParser, Element, HTMLDocument } from "./deps.ts";
+import { JSDOM, Element, HTMLDocument } from "./deps.ts";
 
 import { Image } from "./types.d.ts";
 
 const BASE = "https://apod.nasa.gov/apod/";
 
-const parser = new DOMParser();
-
 export const parse = async (html: string): Promise<Image> => {
-  const document = parser.parseFromString(html, "text/html");
+  const dom = new JSDOM(html);
+  const { document } = dom.window;
   if (document === null) throw new Error("HTML could not be parsed");
 
   const props: any = {};
