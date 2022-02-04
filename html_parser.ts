@@ -12,10 +12,10 @@ export const parse = async (html: string): Promise<Image> => {
 
   const props: any = {};
 
-  const img = document.querySelector("img");
-  const iframe = document.querySelector("iframe");
-  const embed = document.querySelector("embed");
-  const param = document.querySelector("param");
+  const img = document.getElementsByTagName("img")[0];
+  const iframe = document.getElementsByTagName("iframe")[0];
+  const embed = document.getElementsByTagName("embed")[0];
+  const param = document.getElementsByTagName("param")[0];
 
   if (img) {
     props["media_type"] = "image";
@@ -92,16 +92,16 @@ const getDate = (html: string): string => {
 };
 
 const getTitle = (document: HTMLDocument): string => {
-  const centers = [...document.querySelectorAll("center")];
+  const centers = [...document.getElementsByTagName("center")];
   if (centers.length == 2) {
-    const bold = (centers[0] as Element).querySelector("b")!;
+    const bold = (centers[0] as Element).getElementsByTagName("b")[0]!;
     return bold.textContent.trim().split(/\s+/).join(" ");
   }
   return centers[1].textContent.trim().split(/\s+/).join(" ");
 };
 
 const getCopyright = (document: HTMLDocument): string | undefined => {
-  const copyright = [...document.querySelectorAll("b")].find((node) =>
+  const copyright = [...document.getElementsByTagName("b")].find((node) =>
     node.textContent.match(/Copyright/i)
   );
   if (copyright) {
@@ -113,7 +113,7 @@ const getCopyright = (document: HTMLDocument): string | undefined => {
 };
 
 const getExplanation = (document: HTMLDocument): string => {
-  const centers = [...document.querySelectorAll("center")];
+  const centers = [...document.getElementsByTagName("center")];
   const text = centers[1].nextSibling?.nextSibling?.textContent as string;
   return text.replace("Explanation: ", "").trim().split(/\s+/).join(" ");
 };
