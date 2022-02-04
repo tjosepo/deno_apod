@@ -44,7 +44,11 @@ export const parse = async (html: string): Promise<Image> => {
   return props;
 };
 
-const getThumbs = async (url: string): Promise<string | undefined> => {
+const getThumbs = async (
+  url: string | undefined
+): Promise<string | undefined> => {
+  if (!url) return;
+
   if (url.includes("youtube") || url.includes("youtu.be")) {
     const videoId = url.match(
       /(?:(?<=(v|V)\/)|(?<=be\/)|(?<=(\?|\&)v=)|(?<=embed\/))([\w-]+)/
@@ -54,7 +58,6 @@ const getThumbs = async (url: string): Promise<string | undefined> => {
 
   if (url.includes("vimeo")) {
     const videoId = url.match(/(?:\/video\/)(\d+)/);
-    console.log(videoId);
     if (videoId) {
       const request = await fetch(
         "https://vimeo.com/api/v2/video/" + videoId[1] + ".json"
@@ -93,11 +96,27 @@ const getDate = (html: string): string => {
 
 const getTitle = (document: HTMLDocument): string => {
   const centers = [...document.getElementsByTagName("center")];
+  const table = document.getElementsByTagName("table")[0];
+
   if (centers.length == 2) {
-    const bold = (centers[0] as Element).getElementsByTagName("b")[0]!;
-    return bold.textContent.trim().split(/\s+/).join(" ");
+    return centers[0]
+      .getElementsByTagName("b")[0]!
+      .textContent.trim()
+      .split(/\s+/)
+      .join(" ");
+  } else if (table) {
+    return centers[2]
+      .getElementsByTagName("b")[0]!
+      .textContent.trim()
+      .split(/\s+/)
+      .join(" ");
+  } else {
+    return centers[1]
+      .getElementsByTagName("b")[0]!
+      .textContent.trim()
+      .split(/\s+/)
+      .join(" ");
   }
-  return centers[1].textContent.trim().split(/\s+/).join(" ");
 };
 
 const getCopyright = (document: HTMLDocument): string | undefined => {
@@ -114,6 +133,14 @@ const getCopyright = (document: HTMLDocument): string | undefined => {
 
 const getExplanation = (document: HTMLDocument): string => {
   const centers = [...document.getElementsByTagName("center")];
-  const text = centers[1].nextSibling?.nextSibling?.textContent as string;
-  return text.replace("Explanation: ", "").trim().split(/\s+/).join(" ");
+  const table = document.getElementsByTagName("table")[0];
+
+  if (table) {
+    const text =
+      [...document.getElementsByTagName("td")].at(-1)?.textContent ?? "";
+    return text.replace("Explanation: ", "").trim().split(/\s+/).join(" ");
+  } else {
+    const text = centers[1].nextElementSibling?.textContent ?? "";
+    return text.replace("Explanation: ", "").trim().split(/\s+/).join(" ");
+  }
 };
