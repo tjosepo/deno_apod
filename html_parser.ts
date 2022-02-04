@@ -1,12 +1,13 @@
-import { JSDOM, Element, HTMLDocument } from "./deps.ts";
+import { DOMParser, Element, HTMLDocument } from "./deps.ts";
 
 import { Image } from "./types.d.ts";
 
 const BASE = "https://apod.nasa.gov/apod/";
 
+const parser = new DOMParser();
+
 export const parse = async (html: string): Promise<Image> => {
-  const dom = new JSDOM(html);
-  const { document } = dom.window;
+  const document = parser.parseFromString(html, "text/html");
   if (document === null) throw new Error("HTML could not be parsed");
 
   const props: any = {};
@@ -53,6 +54,7 @@ const getThumbs = async (url: string): Promise<string | undefined> => {
 
   if (url.includes("vimeo")) {
     const videoId = url.match(/(?:\/video\/)(\d+)/);
+    console.log(videoId);
     if (videoId) {
       const request = await fetch(
         "https://vimeo.com/api/v2/video/" + videoId[1] + ".json"
