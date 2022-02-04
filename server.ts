@@ -3,6 +3,8 @@ import { getRandomDates } from "./date_utils.ts";
 import { serve } from "./deps.ts";
 import { Image } from "./types.d.ts";
 
+const headers = new Headers({ "access-control-allow-origin": "*" });
+
 serve(async (req: Request) => {
   const url = new URL(req.url);
   const params = url.searchParams;
@@ -12,7 +14,7 @@ serve(async (req: Request) => {
   if (date) return getByDate(date);
   if (count) return getRandom(count);
 
-  return new Response("Bad Request", { status: 400 });
+  return new Response("Bad Request", { status: 400, headers });
 });
 
 const getByDate = async (date: string): Promise<Response> => {
@@ -20,7 +22,7 @@ const getByDate = async (date: string): Promise<Response> => {
   if (!isMatch)
     return error(400, `Time data ${date} does not match format '%Y-%m-%d'`);
   const image = await apod(date);
-  return new Response(JSON.stringify(image));
+  return new Response(JSON.stringify(image), { headers });
 };
 
 const getRandom = async (count: string): Promise<Response> => {
@@ -39,11 +41,12 @@ const getRandom = async (count: string): Promise<Response> => {
     requests.push(request);
   }
   const images = await Promise.all(requests);
-  return new Response(JSON.stringify(images));
+  return new Response(JSON.stringify(images), { headers });
 };
 
 const error = (status: number, message: string) => {
   return new Response(JSON.stringify({ code: status, msg: message }), {
     status,
+    headers,
   });
 };
