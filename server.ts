@@ -1,5 +1,4 @@
-import { ApodOptions } from "./apod";
-import { apod } from "./apod.ts";
+import { apod, ApodOptions } from "./apod.ts";
 import {
   getRandomDates,
   getRange,
