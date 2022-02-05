@@ -1,12 +1,18 @@
 import { DOMParser, Element, HTMLDocument } from "./deps.ts";
-
 import { Image } from "./types.d.ts";
 
 const BASE = "https://apod.nasa.gov/apod/";
 
 const parser = new DOMParser();
 
-export const parse = async (html: string): Promise<Image> => {
+interface ParseOptions {
+  thumbs?: boolean;
+}
+
+export const parse = async (
+  html: string,
+  { thumbs = false } = {}
+): Promise<Image> => {
   const document = parser.parseFromString(html, "text/html");
   if (document === null) throw new Error("HTML could not be parsed");
 
@@ -34,12 +40,15 @@ export const parse = async (html: string): Promise<Image> => {
     }
   }
 
-  props["thumbnail_url"] = await getThumbs(props["url"]);
+  if (thumbs) {
+    props["thumbnail_url"] = await getThumbs(props["url"]);
+  }
 
+  props["copyright"] = getCopyright(document);
   props["date"] = getDate(html);
   props["title"] = getTitle(document);
-  props["copyright"] = getCopyright(document);
   props["explanation"] = getExplanation(document);
+  props["service_version"] = "v1";
 
   return props;
 };
@@ -84,7 +93,7 @@ const months: Record<string, string> = {
 };
 
 const getDate = (html: string): string => {
-  for (let line of html.split("\n")) {
+  for (const line of html.split("\n")) {
     const month = months[line.match(/[a-z]+/i)?.[0].toLowerCase() ?? ""];
     const year = line.match(/\d{4}/)?.[0];
     const day = line.match(/(?<!\d)\d{1,2}(?!\d)/)?.[0].padStart(2, "0");
@@ -95,28 +104,11 @@ const getDate = (html: string): string => {
 };
 
 const getTitle = (document: HTMLDocument): string => {
-  const centers = [...document.getElementsByTagName("center")];
-  const table = document.getElementsByTagName("table")[0];
-
-  if (centers.length == 2) {
-    return centers[0]
-      .getElementsByTagName("b")[0]!
-      .textContent.trim()
-      .split(/\s+/)
-      .join(" ");
-  } else if (table) {
-    return centers[2]
-      .getElementsByTagName("b")[0]!
-      .textContent.trim()
-      .split(/\s+/)
-      .join(" ");
-  } else {
-    return centers[1]
-      .getElementsByTagName("b")[0]!
-      .textContent.trim()
-      .split(/\s+/)
-      .join(" ");
-  }
+  return document
+    .getElementsByTagName("b")[0]
+    .textContent.trim()
+    .split(/\s+/)
+    .join(" ");
 };
 
 const getCopyright = (document: HTMLDocument): string | undefined => {
@@ -132,15 +124,13 @@ const getCopyright = (document: HTMLDocument): string | undefined => {
 };
 
 const getExplanation = (document: HTMLDocument): string => {
-  const centers = [...document.getElementsByTagName("center")];
-  const table = document.getElementsByTagName("table")[0];
-
-  if (table) {
-    const text =
-      [...document.getElementsByTagName("td")].at(-1)?.textContent ?? "";
-    return text.replace("Explanation: ", "").trim().split(/\s+/).join(" ");
-  } else {
-    const text = centers[1].nextElementSibling?.textContent ?? "";
-    return text.replace("Explanation: ", "").trim().split(/\s+/).join(" ");
-  }
+  const explanation = [...document.getElementsByTagName("b")].find((node) =>
+    node.textContent.match(/Explanation:/)
+  );
+  if (!explanation) return "";
+  return explanation
+    .parentElement!.textContent.replace("Explanation: ", "")
+    .trim()
+    .split(/\s+/)
+    .join(" ");
 };
