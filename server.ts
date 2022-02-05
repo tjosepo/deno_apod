@@ -30,7 +30,7 @@ serve(async (req: Request) => {
     if (start && end) return await getByRange(start, end, options);
     else {
       const today = toISODate(Date.now());
-      return await getByDate(today);
+      return await getByDate(today, options);
     }
   } catch {
     return error(500, "Internal Server Error");
